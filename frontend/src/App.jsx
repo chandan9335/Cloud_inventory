@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
@@ -14,6 +15,26 @@ const NAV = [
   { to: '/sales', label: 'Sales', icon: '🧾' },
   { to: '/forecast', label: 'Demand Forecast', icon: '🔮' },
 ];
+
+function ThemeToggle() {
+  const [theme, setTheme] = useState(() => localStorage.getItem('stockpilot-theme') || 'dark');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('stockpilot-theme', theme);
+  }, [theme]);
+
+  return (
+    <button
+      className="theme-toggle"
+      onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
+      aria-label="Toggle light and dark mode"
+      title="Toggle theme"
+    >
+      <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
+    </button>
+  );
+}
 
 function Layout({ children }) {
   const { user, logout } = useAuth();
@@ -76,7 +97,10 @@ function Outlet() {
     <Layout>
       <header className="topbar">
         <h2>{current?.label || 'Dashboard'}</h2>
-        <span className="muted">Signed in as {user?.email}</span>
+        <div className="topbar-actions">
+          <ThemeToggle />
+          <span className="muted">Signed in as {user?.email}</span>
+        </div>
       </header>
       <Routes>
         <Route path="/" element={<Dashboard />} />

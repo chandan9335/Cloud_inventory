@@ -95,7 +95,16 @@ export default function Forecast() {
                   <YAxis tick={{ fill: '#8b96ad', fontSize: 11 }} />
                   <Tooltip contentStyle={{ background: '#1d2639', border: '1px solid #26314a', borderRadius: 10 }} />
                   <Legend />
-                  <Bar dataKey="actual" name="Actual demand" fill="#26314a" radius={[3, 3, 0, 0]} />
+                  <Bar
+                    dataKey="actual"
+                    name="Actual demand"
+                    fill="#60a5fa"
+                    stroke="#bfdbfe"
+                    strokeWidth={1}
+                    radius={[3, 3, 0, 0]}
+                    activeBar={{ fill: '#93c5fd' }}
+                    opacity={0.9}
+                  />
                   <Line type="monotone" dataKey="forecast" name="Forecast (predicted)" stroke="#38d39f" strokeWidth={2.5} dot={{ r: 2.5 }} connectNulls />
                 </ComposedChart>
               </ResponsiveContainer>

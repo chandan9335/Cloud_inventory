@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const { seed } = require('../seed/seed');
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/retail_inventory';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://chauhanchandan368_db_user:chandan9044%40sc@cluster0.ylysnty.mongodb.net/';
 
 async function connectDB() {
   await mongoose.connect(MONGO_URI);

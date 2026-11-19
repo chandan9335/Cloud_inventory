@@ -26,22 +26,35 @@ export default function Login() {
 
   return (
     <div className="login-wrap">
+      <div className="login-glow login-glow-left" />
+      <div className="login-glow login-glow-right" />
+
       <form className="card login-card" onSubmit={submit}>
-        <div className="brand-logo">📦</div>
-        <h2>StockPilot</h2>
+        <div className="login-brand">
+          <div className="brand-logo login-brand-logo">📦</div>
+          <div>
+            <div className="login-kicker">Smart inventory</div>
+            <h2>StockPilot</h2>
+          </div>
+        </div>
+
         <p className="sub">Cloud-based Inventory & Demand Forecasting for Retail Chains</p>
         {error && <div className="login-error">{error}</div>}
+
         <div className="field">
           <label>Email</label>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         </div>
+
         <div className="field">
           <label>Password</label>
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         </div>
-        <button className="btn btn-primary" disabled={loading}>
+
+        <button className="btn btn-primary login-btn" disabled={loading}>
           {loading ? 'Signing in…' : 'Sign in'}
         </button>
+
         <div className="cred-hint">
           Demo accounts — password <strong>admin123</strong> for all:
           <br /> admin@retail.com · manager@retail.com · staff@retail.com

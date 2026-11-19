@@ -59,13 +59,15 @@ copy .env.example .env   # Windows
 # or: cp .env.example .env   # macOS / Linux
 ```
 
-Edit `.env` — for **cloud mode** point `MONGO_URI` at your Atlas cluster:
+Edit `backend/.env` — for **cloud mode**, replace the local `MONGO_URI` with your MongoDB Atlas connection string:
 
 ```
 PORT=5000
-MONGO_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/retail_inventory
+MONGO_URI=mongodb+srv://<db_user>:<url_encoded_password>@<cluster-host>/retail_inventory?retryWrites=true&w=majority
 JWT_SECRET=retail-secret-key
 ```
+
+Create the database user and allow your IP in Atlas **Network Access**. URL-encode special characters in the password. Keep the real URI in `backend/.env` only; `.env` files are git-ignored.
 
 The database seeds automatically on first run: **12 products** and **60 days of sales history** so forecasting has real data immediately.
 

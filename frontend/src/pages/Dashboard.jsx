@@ -69,7 +69,18 @@ export default function Dashboard() {
                   <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip contentStyle={{ background: '#1d2639', border: '1px solid #26314a', borderRadius: 10 }} />
+              <Tooltip
+                contentStyle={{
+                  background: '#0f172a',
+                  border: '1px solid #bfdbfe',
+                  borderRadius: 10,
+                  color: '#f8fafc',
+                  boxShadow: '0 10px 24px rgba(15, 23, 42, 0.34)',
+                }}
+                labelStyle={{ color: '#f8fafc', fontWeight: 600 }}
+                itemStyle={{ color: '#e2e8f0' }}
+                formatter={(value) => [`₹${Number(value).toLocaleString('en-IN')}`, 'Value']}
+              />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
