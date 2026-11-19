@@ -51,7 +51,7 @@ cloud-inventory-forecasting/
 - **Node.js** v18+ (built with Node 24)
 - **MongoDB** — either running locally (`mongodb://localhost:27017`) **or** a cloud **MongoDB Atlas** cluster
 
-### Step 1 — Configure environment (optional)
+### Step 1 — Configure environment (required)
 
 ```bash
 cd backend
@@ -59,15 +59,15 @@ copy .env.example .env   # Windows
 # or: cp .env.example .env   # macOS / Linux
 ```
 
-Edit `backend/.env` — for **cloud mode**, replace the local `MONGO_URI` with your MongoDB Atlas connection string:
+Set `MONGO_URI` to your local MongoDB or MongoDB Atlas connection string, and set `JWT_SECRET` to a long, random value:
 
 ```
 PORT=5000
-MONGO_URI=mongodb+srv://<db_user>:<url_encoded_password>@<cluster-host>/retail_inventory?retryWrites=true&w=majority
-JWT_SECRET=retail-secret-key
+MONGO_URI=mongodb://localhost:27017/retail_inventory
+JWT_SECRET=<long-random-secret>
 ```
 
-Create the database user and allow your IP in Atlas **Network Access**. URL-encode special characters in the password. Keep the real URI in `backend/.env` only; `.env` files are git-ignored.
+For cloud mode, use your MongoDB Atlas connection string. Create a database user and allow your service's connections in Atlas **Network Access**. URL-encode special characters in the password. Keep real credentials in `backend/.env` or your hosting provider's environment settings only; `.env` files are git-ignored. The backend does not start without both values.
 
 The database seeds automatically on first run: **12 products** and **60 days of sales history** so forecasting has real data immediately.
 

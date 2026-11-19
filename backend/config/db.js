@@ -1,10 +1,13 @@
 const mongoose = require('mongoose');
 const { seed } = require('../seed/seed');
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://chauhanchandan368_db_user:chandan9044%40sc@cluster0.ylysnty.mongodb.net/';
-
 async function connectDB() {
-  await mongoose.connect(MONGO_URI);
+  const mongoUri = process.env.MONGO_URI;
+  if (!mongoUri) {
+    throw new Error('MONGO_URI must be set in the environment');
+  }
+
+  await mongoose.connect(mongoUri);
   console.log('MongoDB connected:', mongoose.connection.host, '| DB:', mongoose.connection.name);
   await seed();
 }
