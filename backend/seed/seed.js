@@ -15,17 +15,17 @@ function mulberry32(seed) {
 }
 
 async function seed() {
-  if ((await User.countDocuments()) > 0) return;
+  if ((await User.countDocuments()) === 0) {
+    const pass = bcrypt.hashSync('admin123', 10);
+    await User.insertMany([
+      { name: 'Admin', email: 'admin@retail.com', password: pass, role: 'admin' },
+      { name: 'Store Manager', email: 'manager@retail.com', password: pass, role: 'manager' },
+      { name: 'Staff', email: 'staff@retail.com', password: pass, role: 'staff' },
+    ]);
+  }
+  if ((await Product.countDocuments()) > 0) return;
 
   const rand = mulberry32(20260914);
-  const pass = bcrypt.hashSync('admin123', 10);
-
-  await User.insertMany([
-    { name: 'Admin', email: 'admin@retail.com', password: pass, role: 'admin' },
-    { name: 'Store Manager', email: 'manager@retail.com', password: pass, role: 'manager' },
-    { name: 'Staff', email: 'staff@retail.com', password: pass, role: 'staff' },
-  ]);
-
   const productDefs = [
     { sku: 'ELEC-001', name: 'Wireless Mouse', category: 'Electronics', price: 24.99, cost: 12, base: 4, reorderPoint: 20, stock: 12, lead: 7, safety: 3 },
     { sku: 'ELEC-002', name: 'Mechanical Keyboard', category: 'Electronics', price: 89.99, cost: 48, base: 6, reorderPoint: 25, stock: 34, lead: 10, safety: 4 },
