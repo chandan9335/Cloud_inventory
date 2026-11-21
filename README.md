@@ -24,7 +24,7 @@ A full-stack retail system that tracks inventory, records sales, and **predicts 
   - model R² score, average daily demand, growth trend
   - **auto reorder recommendations** (status: OUT_OF_STOCK / LOW / OK), suggested reorder qty, projected out-of-stock date
 - **Inventory Alerts** — live out-of-stock, low-stock, and forecasted stockout-risk alerts with reorder quantities
-- **Live Forecasting** — forecast and catalogue recommendations automatically recalculate every 30 seconds; manual refresh is also available
+- **Live Forecasting** — forecast and catalogue recommendations automatically recalculate every 15 seconds while the page is visible, refresh on tab focus, and support manual refresh
 
 ## Project Structure
 
@@ -139,10 +139,13 @@ Base URL: `http://localhost:5000/api` (all except login/health need `Authorizati
 
 ## How the ML works
 
-1. **Trend** — `ml-regression` fits a polynomial regression of daily demand vs. time.
-2. **Seasonality** — multiplicative weekday factors are learned from historical residuals (e.g. weekend uplift).
-3. **Forecast** — trend prediction × weekday factor for the next N days.
-4. **Recommendation** — expected demand over (lead time + safety days) minus current stock = suggested reorder quantity.
+1. **Demand series** — sales from the most recent 60 days are aggregated to daily unit sales; missing dates are zero-filled through today.
+2. **Trend** — `ml-regression` fits a polynomial regression (degree up to 3) to daily demand vs. time. With fewer than 3 observations, the historical mean is used as a fallback.
+3. **Seasonality** — weekday factors are computed from actual-to-fitted demand ratios and clamped to 0.5–1.6.
+4. **Forecast** — each daily trend prediction is multiplied by its weekday factor, rounded to whole units, and clamped to zero or above.
+5. **Recommendation** — expected demand over (lead time + safety days) minus current stock gives the suggested reorder quantity, clamped to zero or above.
+
+The forecast screen recalculates from the latest persisted sales and stock records every 15 seconds while visible and when the user returns to the tab. This is near-real-time polling, not a streaming prediction; the displayed R² is an in-sample fit score, not a confidence guarantee.
 
 ## Cloud Deployment Notes
 

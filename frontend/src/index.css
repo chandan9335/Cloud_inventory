@@ -195,6 +195,9 @@ a { color: inherit; text-decoration: none; }
 }
 .theme-toggle:hover { transform: translateY(-1px); border-color: var(--border-strong); }
 .muted { color: var(--muted); font-size: 12px; }
+.live-status { display: inline-flex; align-items: center; gap: 7px; color: var(--accent-2); font-size: 12px; }
+.live-status.offline { color: var(--amber); }
+.live-status-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
 
 .card {
   background: var(--glass);
@@ -462,6 +465,9 @@ select option { background: #101b2d; }
 .icon-btn:hover { color: var(--text); }
 
 .forecast-chart-wrap { margin-top: 18px; }
+.forecast-method-steps { margin: 0 0 14px; padding-left: 22px; color: var(--muted); line-height: 1.7; }
+.forecast-method-steps li { padding-left: 4px; margin-bottom: 5px; }
+.forecast-method-steps strong { color: var(--text); }
 
 .summary-chips { display: flex; gap: 8px; flex-wrap: wrap; }
 .chip { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; font-size: 12px; }

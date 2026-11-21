@@ -5,7 +5,7 @@ import {
   ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
 } from 'recharts';
 
-const REFRESH_INTERVAL = 30000;
+const REFRESH_INTERVAL = 15000;
 
 export default function Forecast() {
   const [searchParams] = useSearchParams();
@@ -19,6 +19,7 @@ export default function Forecast() {
   const [error, setError] = useState('');
   const [recsError, setRecsError] = useState('');
   const [updatedAt, setUpdatedAt] = useState(null);
+  const [recsUpdatedAt, setRecsUpdatedAt] = useState(null);
 
   useEffect(() => {
     api.get('/products')
@@ -37,6 +38,7 @@ export default function Forecast() {
     try {
       const response = await api.get('/forecast/recommendations');
       setRecs(response.data);
+      setRecsUpdatedAt(new Date());
       setRecsError('');
     } catch (err) {
       setRecsError(err.response?.data?.error || 'Failed to load reorder recommendations');
@@ -60,15 +62,27 @@ export default function Forecast() {
 
   useEffect(() => {
     loadRecs();
-    const timer = window.setInterval(loadRecs, REFRESH_INTERVAL);
-    return () => window.clearInterval(timer);
   }, [loadRecs]);
 
   useEffect(() => {
     loadForecast();
-    const timer = window.setInterval(loadForecast, REFRESH_INTERVAL);
-    return () => window.clearInterval(timer);
   }, [loadForecast]);
+
+  useEffect(() => {
+    const refreshVisiblePage = () => {
+      if (document.visibilityState !== 'visible') return;
+      loadForecast();
+      loadRecs();
+    };
+    const timer = window.setInterval(refreshVisiblePage, REFRESH_INTERVAL);
+    document.addEventListener('visibilitychange', refreshVisiblePage);
+    window.addEventListener('focus', refreshVisiblePage);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', refreshVisiblePage);
+      window.removeEventListener('focus', refreshVisiblePage);
+    };
+  }, [loadForecast, loadRecs]);
 
   if (productsLoading) return <div className="card">Loading products…</div>;
   if (!products.length) return <div className="card" role={error ? 'alert' : undefined}>{error || 'No products. Add products first.'}</div>;
@@ -92,12 +106,17 @@ export default function Forecast() {
         <select value={horizon} onChange={(event) => setHorizon(+event.target.value)}>
           {[7, 14, 30].map((days) => <option key={days} value={days}>{days} day forecast</option>)}
         </select>
-        <span className="muted" aria-live="polite">
-          {updatedAt ? `Auto-refreshing every 30s · updated ${updatedAt.toLocaleTimeString()}` : 'Preparing live forecast…'}
+        <span className={`live-status${error || recsError ? ' offline' : ''}`} role="status" aria-live="polite">
+          <span className="live-status-dot" />
+          {error || recsError
+            ? `Refresh issue · last forecast ${updatedAt ? updatedAt.toLocaleTimeString() : 'not available'}`
+            : updatedAt
+              ? `Live · forecast ${updatedAt.toLocaleTimeString()}${recsUpdatedAt ? ` · catalogue ${recsUpdatedAt.toLocaleTimeString()}` : ''} · refreshes every 15s`
+            : 'Connecting to live forecast...'}
         </span>
         <span className="spacer" />
         <button className="btn btn-ghost btn-sm" onClick={() => { loadForecast(); loadRecs(); }} disabled={loading}>
-          ↻ Refresh now
+          Refresh now
         </button>
       </div>
 
@@ -162,6 +181,25 @@ export default function Forecast() {
           )}
 
           <div className="card" style={{ marginTop: 16 }}>
+            <h3>How this live forecast is calculated</h3>
+            <p>
+              The selected product is recalculated from recent sales and current stock. The active model is{' '}
+              <strong>{fc.model}</strong>
+              {fc.r2 != null && <> (in-sample R²: {fc.r2}).</>}
+            </p>
+            <ol className="forecast-method-steps">
+              <li><strong>Build daily demand:</strong> sum units sold from the last 60 days by calendar date, then zero-fill dates without sales through today.</li>
+              <li><strong>Estimate the trend:</strong> fit a polynomial regression to daily demand over time, using up to degree 3. If there are fewer than 3 observations, use average demand as a fallback.</li>
+              <li><strong>Adjust for weekday seasonality:</strong> compare actual demand with the fitted trend for each weekday, average those ratios, and limit each factor to 0.5–1.6.</li>
+              <li><strong>Project future demand:</strong> multiply each future trend estimate by its weekday factor, round to whole units, and never forecast below zero.</li>
+              <li><strong>Recommend replenishment:</strong> estimate demand across lead time plus safety days, subtract stock on hand, and clamp the reorder quantity at zero. Stock at/below the reorder point is flagged LOW; zero stock is OUT OF STOCK.</li>
+            </ol>
+            <p className="muted">
+              The page requests fresh sales and stock data every 15 seconds while visible, and refreshes when you return to the tab. R² describes fit to the historical data; it is not a confidence guarantee for future demand.
+            </p>
+          </div>
+
+          <div className="card" style={{ marginTop: 16 }}>
             <h3>Reorder recommendations — full catalogue</h3>
             <table>
               <thead>
@@ -187,7 +225,7 @@ export default function Forecast() {
         </>
       )}
 
-      {loading && <div className="card">Updating forecast…</div>}
+      {loading && <div className="card">Updating forecast...</div>}
     </div>
   );
 }
