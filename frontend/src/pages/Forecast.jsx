@@ -1,64 +1,108 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../api';
 import {
   ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
 } from 'recharts';
 
+const REFRESH_INTERVAL = 30000;
+
 export default function Forecast() {
+  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
   const [productId, setProductId] = useState('');
   const [horizon, setHorizon] = useState(14);
   const [fc, setFc] = useState(null);
   const [recs, setRecs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [recsError, setRecsError] = useState('');
+  const [updatedAt, setUpdatedAt] = useState(null);
 
   useEffect(() => {
-    api.get('/products').then((r) => {
-      setProducts(r.data);
-      if (r.data.length) setProductId(r.data[0]._id);
-    });
-    loadRecs();
+    api.get('/products')
+      .then((response) => {
+        setProducts(response.data);
+        const requestedProduct = searchParams.get('product');
+        setProductId(response.data.some((product) => product._id === requestedProduct)
+          ? requestedProduct
+          : response.data[0]?._id || '');
+      })
+      .catch((err) => setError(err.response?.data?.error || 'Failed to load products'))
+      .finally(() => setProductsLoading(false));
+  }, [searchParams]);
+
+  const loadRecs = useCallback(async () => {
+    try {
+      const response = await api.get('/forecast/recommendations');
+      setRecs(response.data);
+      setRecsError('');
+    } catch (err) {
+      setRecsError(err.response?.data?.error || 'Failed to load reorder recommendations');
+    }
   }, []);
 
-  const loadRecs = () => api.get('/forecast/recommendations').then((r) => setRecs(r.data)).catch(() => {});
-
-  useEffect(() => {
+  const loadForecast = useCallback(async () => {
     if (!productId) return;
     setLoading(true);
     setError('');
-    api.get(`/forecast/${productId}`, { params: { horizon } })
-      .then((r) => setFc(r.data))
-      .catch((err) => setError(err.response?.data?.error || 'Forecast failed'))
-      .finally(() => setLoading(false));
+    try {
+      const response = await api.get(`/forecast/${productId}`, { params: { horizon } });
+      setFc(response.data);
+      setUpdatedAt(new Date());
+    } catch (err) {
+      setError(err.response?.data?.error || 'Forecast failed');
+    } finally {
+      setLoading(false);
+    }
   }, [productId, horizon]);
 
-  if (!products.length) return <div className="card">No products. Add products first.</div>;
+  useEffect(() => {
+    loadRecs();
+    const timer = window.setInterval(loadRecs, REFRESH_INTERVAL);
+    return () => window.clearInterval(timer);
+  }, [loadRecs]);
+
+  useEffect(() => {
+    loadForecast();
+    const timer = window.setInterval(loadForecast, REFRESH_INTERVAL);
+    return () => window.clearInterval(timer);
+  }, [loadForecast]);
+
+  if (productsLoading) return <div className="card">Loading products…</div>;
+  if (!products.length) return <div className="card" role={error ? 'alert' : undefined}>{error || 'No products. Add products first.'}</div>;
 
   const { product } = fc || {};
   const chartData = fc
-    ? [...fc.history, ...fc.forecast].map((p) => ({
-        date: p.date,
-        actual: p.predicted ? null : p.units,
-        forecast: p.predicted ? p.units : null,
+    ? [...fc.history, ...fc.forecast].map((point) => ({
+        date: point.date,
+        actual: point.predicted ? null : point.units,
+        forecast: point.predicted ? point.units : null,
       }))
     : [];
-
-  const statusBadge = (s) => ({ OK: 'ok', LOW: 'low', OUT_OF_STOCK: 'out' })[s] || 'info';
+  const statusBadge = (status) => ({ OK: 'ok', LOW: 'low', OUT_OF_STOCK: 'out' })[status] || 'info';
 
   return (
     <div>
       <div className="toolbar">
-        <select value={productId} onChange={(e) => setProductId(e.target.value)}>
-          {products.map((p) => <option key={p._id} value={p._id}>{p.name}</option>)}
+        <select value={productId} onChange={(event) => setProductId(event.target.value)}>
+          {products.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}
         </select>
-        <select value={horizon} onChange={(e) => setHorizon(+e.target.value)}>
-          {[7, 14, 30].map((h) => <option key={h} value={h}>{h} day forecast</option>)}
+        <select value={horizon} onChange={(event) => setHorizon(+event.target.value)}>
+          {[7, 14, 30].map((days) => <option key={days} value={days}>{days} day forecast</option>)}
         </select>
-        <button className="btn btn-ghost btn-sm" onClick={loadRecs}>↻ Refresh recommendations</button>
+        <span className="muted" aria-live="polite">
+          {updatedAt ? `Auto-refreshing every 30s · updated ${updatedAt.toLocaleTimeString()}` : 'Preparing live forecast…'}
+        </span>
+        <span className="spacer" />
+        <button className="btn btn-ghost btn-sm" onClick={() => { loadForecast(); loadRecs(); }} disabled={loading}>
+          ↻ Refresh now
+        </button>
       </div>
 
-      {error && <div className="card">{error}</div>}
+      {error && <div className="card" role="alert">{error}</div>}
+      {recsError && <div className="card" role="alert">{recsError}</div>}
 
       {fc && (
         <>
@@ -124,17 +168,17 @@ export default function Forecast() {
                 <tr><th>SKU</th><th>Product</th><th>Category</th><th>Stock</th><th>Avg Daily</th><th>Coverage</th><th>Status</th><th>Suggested Reorder</th><th>Model</th></tr>
               </thead>
               <tbody>
-                {recs.map((r) => (
-                  <tr key={r.product._id}>
-                    <td className="muted">{r.product.sku}</td>
-                    <td>{r.product.name}</td>
-                    <td>{r.product.category}</td>
-                    <td>{r.stock.level}</td>
-                    <td>{r.avgDailyDemand}</td>
-                    <td>{r.stock.coverDays == null || !isFinite(r.stock.coverDays) ? '∞' : r.stock.coverDays}d</td>
-                    <td><span className={`badge ${statusBadge(r.recommendation.status)}`}>{r.recommendation.status.replace('_', ' ')}</span></td>
-                    <td><strong>{r.recommendation.suggestedReorderQty}</strong></td>
-                    <td className="muted">{r.algorithm}</td>
+                {recs.map((item) => (
+                  <tr key={item.product._id}>
+                    <td className="muted">{item.product.sku}</td>
+                    <td>{item.product.name}</td>
+                    <td>{item.product.category}</td>
+                    <td>{item.stock.level}</td>
+                    <td>{item.avgDailyDemand}</td>
+                    <td>{item.stock.coverDays == null || !isFinite(item.stock.coverDays) ? '∞' : item.stock.coverDays}d</td>
+                    <td><span className={`badge ${statusBadge(item.recommendation.status)}`}>{item.recommendation.status.replace('_', ' ')}</span></td>
+                    <td><strong>{item.recommendation.suggestedReorderQty}</strong></td>
+                    <td className="muted">{item.algorithm}</td>
                   </tr>
                 ))}
               </tbody>
@@ -143,7 +187,7 @@ export default function Forecast() {
         </>
       )}
 
-      {loading && <div className="card">Running ML model…</div>}
+      {loading && <div className="card">Updating forecast…</div>}
     </div>
   );
 }

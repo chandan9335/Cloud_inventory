@@ -23,6 +23,8 @@ A full-stack retail system that tracks inventory, records sales, and **predicts 
   - per-product daily demand forecast (7/14/30 days)
   - model R² score, average daily demand, growth trend
   - **auto reorder recommendations** (status: OUT_OF_STOCK / LOW / OK), suggested reorder qty, projected out-of-stock date
+- **Inventory Alerts** — live out-of-stock, low-stock, and forecasted stockout-risk alerts with reorder quantities
+- **Live Forecasting** — forecast and catalogue recommendations automatically recalculate every 30 seconds; manual refresh is also available
 
 ## Project Structure
 

@@ -7,6 +7,7 @@ import Products from './pages/Products';
 import Inventory from './pages/Inventory';
 import Sales from './pages/Sales';
 import Forecast from './pages/Forecast';
+import Alerts from './pages/Alerts';
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: '📊', end: true },
@@ -14,6 +15,7 @@ const NAV = [
   { to: '/inventory', label: 'Inventory', icon: '🗃️' },
   { to: '/sales', label: 'Sales', icon: '🧾' },
   { to: '/forecast', label: 'Demand Forecast', icon: '🔮' },
+  { to: '/alerts', label: 'Alerts', icon: '🔔' },
 ];
 
 function ThemeToggle() {
@@ -108,6 +110,7 @@ function Outlet() {
         <Route path="/inventory" element={<Inventory />} />
         <Route path="/sales" element={<Sales />} />
         <Route path="/forecast" element={<Forecast />} />
+        <Route path="/alerts" element={<Alerts />} />
       </Routes>
     </Layout>
   );
