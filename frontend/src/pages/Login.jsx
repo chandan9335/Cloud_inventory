@@ -54,11 +54,6 @@ export default function Login() {
         <button className="btn btn-primary login-btn" disabled={loading}>
           {loading ? 'Signing in…' : 'Sign in'}
         </button>
-
-        <div className="cred-hint">
-          Demo accounts — password <strong>admin123</strong> for all:
-          <br /> admin@retail.com · manager@retail.com · staff@retail.com
-        </div>
       </form>
     </div>
   );

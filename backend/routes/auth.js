@@ -6,8 +6,9 @@ const User = require('../models/User');
 
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email: String(email || '').toLowerCase() });
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const password = String(req.body.password || '');
+    const user = await User.findOne({ email });
     if (!user || !bcrypt.compareSync(password || '', user.password)) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }

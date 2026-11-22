@@ -15,14 +15,20 @@ function mulberry32(seed) {
 }
 
 async function seed() {
-  if ((await User.countDocuments()) === 0) {
-    const pass = bcrypt.hashSync('admin123', 10);
-    await User.insertMany([
-      { name: 'Admin', email: 'admin@retail.com', password: pass, role: 'admin' },
-      { name: 'Store Manager', email: 'manager@retail.com', password: pass, role: 'manager' },
-      { name: 'Staff', email: 'staff@retail.com', password: pass, role: 'staff' },
-    ]);
-  }
+  const pass = bcrypt.hashSync('admin123', 10);
+  const demoAccounts = [
+    { name: 'Admin', email: 'admin@retail.com', role: 'admin' },
+    { name: 'Store Manager', email: 'manager@retail.com', role: 'manager' },
+    { name: 'Staff', email: 'staff@retail.com', role: 'staff' },
+  ];
+
+  await Promise.all(demoAccounts.map((account) =>
+    User.findOneAndUpdate(
+      { email: account.email },
+      { $set: { ...account, password: pass } },
+      { upsert: true, new: true, runValidators: true }
+    )
+  ));
   if ((await Product.countDocuments()) > 0) return;
 
   const rand = mulberry32(20260914);
