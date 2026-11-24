@@ -126,6 +126,7 @@ Base URL: `http://localhost:5000/api` (all except login/health need `Authorizati
 | Method | Endpoint | Description | Access |
 |--------|----------|-------------|--------|
 | POST | `/auth/login` | Login → JWT | Public |
+| POST | `/auth/register` | Create a staff account → JWT | Public |
 | GET | `/dashboard` | Stats, revenue chart, top products | Auth |
 | GET/POST/PUT/DELETE | `/products` | Product CRUD | write: admin/manager |
 | GET | `/inventory` | Stock levels + low-stock flags | Auth |

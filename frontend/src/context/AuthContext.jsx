@@ -11,12 +11,21 @@ export function AuthProvider({ children }) {
     api.get('/auth/me').catch(() => {}); // validate token silently
   }, []);
 
-  const login = async (email, password) => {
-    const { data } = await api.post('/auth/login', { email, password });
+  const saveSession = (data) => {
     localStorage.setItem('retail_token', data.token);
     localStorage.setItem('retail_user', JSON.stringify(data.user));
     setToken(data.token);
     setUser(data.user);
+  };
+
+  const login = async (email, password) => {
+    const { data } = await api.post('/auth/login', { email, password });
+    saveSession(data);
+  };
+
+  const register = async (name, email, password) => {
+    const { data } = await api.post('/auth/register', { name, email, password });
+    saveSession(data);
   };
 
   const logout = () => {
@@ -28,7 +37,7 @@ export function AuthProvider({ children }) {
 
   const can = (...roles) => user && roles.some((r) => user.role === r);
 
-  return <AuthContext.Provider value={{ user, token, login, logout, can }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, token, login, register, logout, can }}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);

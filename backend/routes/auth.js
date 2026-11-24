@@ -21,15 +21,20 @@ router.post('/login', async (req, res) => {
 
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) return res.status(400).json({ error: 'name, email and password are required' });
-    if (await User.findOne({ email: String(email).toLowerCase() })) {
+    const { name, email, password } = req.body || {};
+    const cleanName = typeof name === 'string' ? name.trim() : '';
+    const cleanEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+    if (!cleanName || !cleanEmail || typeof password !== 'string' || !password) {
+      return res.status(400).json({ error: 'name, email and password are required' });
+    }
+    if (await User.findOne({ email: cleanEmail })) {
       return res.status(409).json({ error: 'Email already registered' });
     }
-    const user = await User.create({ name, email, password: bcrypt.hashSync(password, 10), role: 'staff' });
+    const user = await User.create({ name: cleanName, email: cleanEmail, password: bcrypt.hashSync(password, 10), role: 'staff' });
     const safe = { id: user.id, name: user.name, email: user.email, role: user.role };
     res.status(201).json({ token: signToken(user), user: safe });
   } catch (err) {
+    if (err.code === 11000) return res.status(409).json({ error: 'Email already registered' });
     res.status(500).json({ error: err.message });
   }
 });
